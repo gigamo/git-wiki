@@ -1,7 +1,7 @@
-require "sinatra/base"
-require "haml"
-require "grit"
-require "rdiscount"
+require 'sinatra'
+require 'haml'
+require 'grit'
+require 'rdiscount'
 
 module GitWiki
   class << self
@@ -9,9 +9,9 @@ module GitWiki
   end
 
   def self.new(repository, extension, homepage)
-    self.homepage   = homepage
-    self.extension  = extension
-    self.repository = Grit::Repo.new(repository)
+    self.homepage   = 'Home'
+    self.extension  = '.md'
+    self.repository = Grit::Repo.new('~/Code/ruby/git-wiki/repo')
 
     App
   end
@@ -27,7 +27,7 @@ module GitWiki
   class Page
     def self.find_all
       return [] if repository.tree.contents.empty?
-      repository.tree.contents.collect { |blob| new(blob) }
+      repository.tree.contents.map {|blob| new(blob)}
     end
 
     def self.find(name)
@@ -44,9 +44,9 @@ module GitWiki
 
     def self.css_class_for(name)
       find(name)
-      "exists"
+      'exists'
     rescue PageNotFound
-      "unknown"
+      'unknown'
     end
 
     def self.repository
@@ -65,7 +65,7 @@ module GitWiki
     def self.create_blob_for(page_name)
       Grit::Blob.create(repository, {
         :name => page_name + extension,
-        :data => ""
+        :data => ''
       })
     end
     private_class_method :create_blob_for
@@ -96,15 +96,15 @@ module GitWiki
 
     def update_content(new_content)
       return if new_content == content
-      File.open(file_name, "w") { |f| f << new_content }
+      File.open(file_name, 'w') {|f| f << new_content}
       add_to_index_and_commit!
     end
 
     private
       def add_to_index_and_commit!
-        Dir.chdir(self.class.repository.working_dir) {
+        Dir.chdir(self.class.repository.working_dir) do
           self.class.repository.add(@blob.name)
-        }
+        end
         self.class.repository.commit_index(commit_message)
       end
 
@@ -117,66 +117,67 @@ module GitWiki
       end
 
       def wiki_link(str)
-        str.gsub(/([A-Z][a-z]+[A-Z][A-Za-z0-9]+)/) { |page|
-          %Q{<a class="#{self.class.css_class_for(page)}"} +
-            %Q{href="/#{page}">#{page}</a>}
-        }
+        str.gsub(/([A-Z][a-z]+[A-Z][A-Za-z0-9]+)/) do |page|
+          %Q{<a class='#{self.class.css_class_for(page)}'} +
+            %Q{href='/#{page}'>#{page}</a>}
+        end
       end
   end
 
   class App < Sinatra::Base
+    enable :inline_templates
     set :app_file, __FILE__
-    set :haml, { :format        => :html5,
-                 :attr_wrapper  => '"'     }
-    use_in_file_templates!
+    set :haml, {:format        => :html5,
+                :attr_wrapper  => '"'    }
 
     error PageNotFound do
-      page = request.env["sinatra.error"].name
+      page = request.env['sinatra.error'].name
       redirect "/#{page}/edit"
     end
 
     before do
-      content_type "text/html", :charset => "utf-8"
+      content_type 'text/html', :charset => 'utf-8'
     end
 
-    get "/" do
-      redirect "/" + GitWiki.homepage
+    get '/' do
+      redirect '/' + GitWiki.homepage
     end
 
-    get "/pages" do
+    get '/pages' do
       @pages = Page.find_all
       haml :list
     end
 
-    get "/:page/edit" do
+    get '/:page/edit' do
       @page = Page.find_or_create(params[:page])
       haml :edit
     end
 
-    get "/:page" do
+    get '/:page' do
       @page = Page.find(params[:page])
       haml :show
     end
 
-    post "/:page" do
+    post '/:page' do
       @page = Page.find_or_create(params[:page])
       @page.update_content(params[:body])
       redirect "/#{@page}"
     end
 
     private
-      def title(title=nil)
+      def title(title = nil)
         @title = title.to_s unless title.nil?
         @title
       end
 
       def list_item(page)
-        %Q{<a class="page_name" href="/#{page}">#{page.name}</a>}
+        %Q{<a class='page_name' href='/#{page}'>#{page.name}</a>}
       end
   end
 end
 
 __END__
+
 @@ layout
 !!!
 %html
@@ -185,9 +186,9 @@ __END__
   %body
     %ul
       %li
-        %a{ :href => "/#{GitWiki.homepage}" } Home
+        %a{:href => "/#{GitWiki.homepage}"} Home
       %li
-        %a{ :href => "/pages" } All pages
+        %a{:href => '/pages'} All pages
     #content= yield
 
 @@ show
@@ -203,14 +204,14 @@ __END__
 %h1= title
 %form{:method => 'POST', :action => "/#{@page}"}
   %p
-    %textarea{:name => 'body', :rows => 30, :style => "width: 100%"}= @page.content
+    %textarea{:name => 'body', :rows => 30, :style => 'width: 100%'}= @page.content
   %p
-    %input.submit{:type => :submit, :value => "Save as the newest version"}
+    %input.submit{:type => :submit, :value => 'Save as the newest version'}
     or
-    %a.cancel{:href=>"/#{@page}"} cancel
+    %a.cancel{:href => "/#{@page}"} cancel
 
 @@ list
-- title "Listing pages"
+- title 'Listing pages'
 %h1 All pages
 - if @pages.empty?
   %p No pages found.
