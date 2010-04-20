@@ -9,9 +9,9 @@ module GitWiki
   end
 
   def self.new(repository, extension, homepage)
-    self.homepage   = 'Home'
-    self.extension  = '.md'
-    self.repository = Grit::Repo.new('~/Code/ruby/git-wiki/repo')
+    self.homepage   = homepage  || 'Home'
+    self.extension  = extension || '.md'
+    self.repository = Grit::Repo.new(repository || '~/Notebook')
 
     App
   end
