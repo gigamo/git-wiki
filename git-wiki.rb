@@ -11,7 +11,7 @@ module GitWiki
   def self.new(repository, extension, homepage)
     self.homepage   = homepage  || 'Home'
     self.extension  = extension || '.md'
-    self.repository = Grit::Repo.new(repository || '~/Notebook')
+    self.repository = Grit::Repo.new('~/Notebook')
 
     App
   end
@@ -140,7 +140,7 @@ module GitWiki
     end
 
     get '/' do
-      redirect '/' + GitWiki.homepage
+      redirect "/#{GitWiki.homepage}"
     end
 
     get '/pages' do
@@ -183,6 +183,17 @@ __END__
 %html
   %head
     %title= title
+    %script{:type => 'text/javascript', :src => 'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js'}
+    :javascript
+      $(function() {
+        var form = $('#new_page'),
+           input = $('#page_name');
+        input.keyup(function(e) {
+          form.attr('action', '/'+input.val());
+        });
+      });
+    %style
+      body { font-family: 'Lucida Grande', 'Georgia', sans-serif; font-size: 12px; }
   %body
     %ul
       %li
