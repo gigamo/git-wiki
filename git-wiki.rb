@@ -127,8 +127,6 @@ module GitWiki
   class App < Sinatra::Base
     enable :inline_templates
     set :app_file, __FILE__
-    set :haml, {:format        => :html5,
-                :attr_wrapper  => '"'    }
 
     error PageNotFound do
       page = request.env['sinatra.error'].name
@@ -182,20 +180,21 @@ __END__
 !!!
 %html
   %head
-    %title= title
-    %script{:type => 'text/javascript', :src => 'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js'}
-    :javascript
-      $(function() {
-        var form = $('#new_page'),
-           input = $('#page_name');
-        input.keyup(function(e) {
-          form.attr('action', '/'+input.val());
-        });
-      });
     %style
-      body { font-family: 'Lucida Grande', 'Georgia', sans-serif; font-size: 12px; }
+      body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, Georgia, sans-serif;
+        font-size: 12px; }
+      a.unknown {
+        color: #930; }
+      #title {
+        margin-top: 0; }
+      #content {
+        width: 580px;
+        text-align: justify; }
+      #edit {
+        float: right; }
   %body
-    %ul
+    %ul#nav
       %li
         %a{:href => "/#{GitWiki.homepage}"} Home
       %li
@@ -206,13 +205,13 @@ __END__
 - title @page.name
 #edit
   %a{:href => "/#{@page}/edit"} Edit this page
-%h1= title
+%h1#title= title
 #content
   ~"#{@page.to_html}"
 
 @@ edit
 - title "Editing #{@page.name}"
-%h1= title
+%h1#title= title
 %form{:method => 'POST', :action => "/#{@page}"}
   %p
     %textarea{:name => 'body', :rows => 30, :style => 'width: 100%'}= @page.content
@@ -223,7 +222,7 @@ __END__
 
 @@ list
 - title 'Listing pages'
-%h1 All pages
+%h1#title All pages
 - if @pages.empty?
   %p No pages found.
 - else
